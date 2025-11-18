@@ -34,16 +34,16 @@ services:
     networks: [backend]
 
   # --- Servicio auth-security (espera a async-messaging healthy) ---
-#  auth-security:
-#    extends:
-#      file: ./auth-security/docker-compose.yaml
-#      service: auth-security-svc
-#    depends_on:
-#      auth-security-db:
-#        condition: service_healthy
-#      async-messaging:
-#        condition: service_healthy
-#    networks: [backend]
+  auth-security:
+    extends:
+      file: ./auth-security/docker-compose.yaml
+      service: auth-security-svc
+    depends_on:
+      auth-security-db:
+        condition: service_healthy
+      async-messaging:
+        condition: service_healthy
+    networks: [backend]
 
   # --- DB api-integration (dependencia) ---
   api-integration-db:

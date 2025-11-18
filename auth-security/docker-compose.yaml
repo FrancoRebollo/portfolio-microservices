@@ -16,26 +16,26 @@ services:
     networks:
       - backend
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U auth_security"]
+      test: ["CMD-SHELL", "pg_isready -U auth_security -d auth_security_db"]
       interval: 5s
       timeout: 5s
       retries: 5
 
 
-#  auth-security-svc:
-#    build:
-#      context: ./auth-security-svc
-#      dockerfile: ./cmd/apis/Dockerfile
-#    container_name: auth-security-svc
-#    ports:
-#      - "3004:3004"  # host:container
-#    depends_on:
-#      auth-security-db:
-#        condition: service_healthy
-#    env_file:
-#      - ./auth-security-svc/.env
-#    networks:
-#      - backend
+  auth-security-svc:
+    build:
+      context: ./auth-security-svc
+      dockerfile: ./cmd/apis/Dockerfile
+    container_name: auth-security-svc
+    ports:
+      - "3004:3004"  # host:container
+    depends_on:
+      auth-security-db:
+        condition: service_healthy
+    env_file:
+      - ./auth-security-svc/.env
+    networks:
+      - backend
 
 volumes:
   pgdata_auth:

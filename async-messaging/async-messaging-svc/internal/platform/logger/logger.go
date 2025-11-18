@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -18,17 +17,17 @@ import (
 /* var ejecutable, _ = os.Executable()
 var rutaAbsoluta = filepath.Join(filepath.Dir(ejecutable), "logs") */
 
-var rutaAbsoluta = filepath.Join(".", "logs")
+var rutaAbsoluta = "/tmp/logs"
 var fileName string
 
 type ResponseRecorder struct {
-    gin.ResponseWriter
-    Body *bytes.Buffer
+	gin.ResponseWriter
+	Body *bytes.Buffer
 }
 
 func (r *ResponseRecorder) Write(b []byte) (int, error) {
-    r.Body.Write(b) // Capturar el contenido de la respuesta
-    return r.ResponseWriter.Write(b)
+	r.Body.Write(b) // Capturar el contenido de la respuesta
+	return r.ResponseWriter.Write(b)
 }
 
 // Crea el directorio en caso de que no exista
@@ -41,14 +40,14 @@ func setupLogsDirectory() {
 	}
 }
 
-func LoggerInfo() *logrus.Entry{
+func LoggerInfo() *logrus.Entry {
 	setupLogsDirectory()
 
 	if fileName == "" {
 		fileName = "logger-" + time.Now().Format("02012006") + ".log"
 	}
 
-	file, err := os.OpenFile(rutaAbsoluta+"/"+ fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile(rutaAbsoluta+"/"+fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		logrus.Println("Error al abrir el archivo de registro: ", err)
 		return nil
@@ -56,13 +55,13 @@ func LoggerInfo() *logrus.Entry{
 
 	logrus.SetOutput(file)
 	logrus.SetFormatter(&logrus.JSONFormatter{})
-	
+
 	logEntry := logrus.WithFields(logrus.Fields{})
 
 	return logEntry
 }
 
-func LoggerError() *logrus.Entry{
+func LoggerError() *logrus.Entry {
 	setupLogsDirectory()
 
 	if fileName == "" {
@@ -73,9 +72,9 @@ func LoggerError() *logrus.Entry{
 	if err != nil {
 		logrus.Println("Error al abrir el archivo de registro: ", err)
 	}
-	
+
 	logrus.SetFormatter(&logrus.JSONFormatter{
-		FieldMap: logrus.FieldMap{			
+		FieldMap: logrus.FieldMap{
 			logrus.FieldKeyLevel: "@level",
 			logrus.FieldKeyMsg:   "@message",
 			logrus.FieldKeyTime:  "@timestamp",
@@ -89,14 +88,13 @@ func LoggerError() *logrus.Entry{
 	consoleWriter := os.Stdout
 	multiWriter := io.MultiWriter(file, consoleWriter)
 	logrus.SetOutput(multiWriter)
-	
+
 	//Setear parámetros del Mensaje
 	logEntry := logrus.WithFields(logrus.Fields{})
 
 	// escribe el error en el Parámetro msg
 	return logEntry
 }
-
 
 func LoggerHttp(c *gin.Context, responseBody string) {
 	setupLogsDirectory()
@@ -111,24 +109,23 @@ func LoggerHttp(c *gin.Context, responseBody string) {
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 
 	var bodyBytes []byte
-    if c.Request.Body != nil {
-        bodyBytes, _ = io.ReadAll(c.Request.Body)
-    }
-    c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+	if c.Request.Body != nil {
+		bodyBytes, _ = io.ReadAll(c.Request.Body)
+	}
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
 	//Setear parámetros del Mensaje
 	logEntry := logrus.WithFields(logrus.Fields{
-        "method":        c.Request.Method,
-        "url":           c.Request.URL.String(),
-        "headers":       c.Request.Header,
-        "params":        c.Request.URL.Query(),
-        "request_body":  string(bodyBytes),
-        "response_body": responseBody,
-        "status":        c.Writer.Status(),
-    })
+		"method":        c.Request.Method,
+		"url":           c.Request.URL.String(),
+		"headers":       c.Request.Header,
+		"params":        c.Request.URL.Query(),
+		"request_body":  string(bodyBytes),
+		"response_body": responseBody,
+		"status":        c.Writer.Status(),
+	})
 
 	if c.Writer.Status() != 200 {
 		logEntry.Info("httpRequest")
-	}	
+	}
 }
-
